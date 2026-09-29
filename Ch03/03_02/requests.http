@@ -11,7 +11,7 @@ POST http://localhost:8000/sales
 
 
 ### Get sale (change ID)
-GET http://localhost:8000/sales/1
+GET http://localhost:8000/sales/5ce0ce972b0f4eda861a8cddc1cb6b9b
 
 ### Empty customer ID
 POST http://localhost:8000/sales

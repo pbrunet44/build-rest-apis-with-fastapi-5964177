@@ -36,3 +36,50 @@ Validate that {id} is a valid VM id and return a JSON message:
         }
     }
 """
+from fastapi import FastAPI, Request, HTTPException
+from pydantic import BaseModel, Field
+from http import HTTPStatus
+from typing import Literal
+from uuid import uuid4
+from threading import Lock
+
+MIN_CPU_COUNT = 0
+MAX_CPU_COUNT = 65
+MIN_MEM_SIZE_GB = 8
+MAX_MEM_SIZE_GB = 1025
+IMAGES = ["ubuntu-24.04", "debian:bookworm", "alpine:3.20"]
+
+
+class Vm(BaseModel):
+    cpu_count: int = Field(gt=0, lt=65)
+    mem_size_gb: int = Field(gt=8, lt=1025)
+    image: Literal["ubuntu-24.04", "debian:bookworm", "alpine:3.20"]
+
+
+lock = Lock()
+vms = {}
+
+app = FastAPI()
+
+
+@app.post('/vm/start')
+def vm_start(vm: Vm):
+    id = uuid4().hex
+    with lock:
+        vms[id] = vm
+    return {
+        'id': id
+    }
+
+
+@app.post('/vm/{id}/stop')
+def vm_stop(id: str) -> dict:
+    with lock:
+        vm = vms.pop(id, None)
+    if vm is None:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND,
+                            detail='vm not found')
+    return {
+        'id': id,
+        'spec': vm.dict()
+    }
