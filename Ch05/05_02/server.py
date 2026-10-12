@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from time import perf_counter
 
 from fastapi import FastAPI, Request
+import uvicorn
 
 import db
 
@@ -13,6 +14,7 @@ logging.basicConfig(
 )
 
 app = FastAPI()
+log = logging.getLogger('uvicorn')
 
 
 @app.get('/posts/{login}')
@@ -24,7 +26,7 @@ def get_posts(login: str, since: str = None):
         # Round to day
         since = datetime(since.year, since.month, since.day)
 
-    logging.info('get posts for %s since %s', login, since)
+    log.info('get posts for %s since %s', login, since)
     posts = db.query_posts(login, since)
     return posts
 
@@ -34,7 +36,7 @@ async def timing(request: Request, call_next):
     start = perf_counter()
     response = await call_next(request)
     duration = perf_counter() - start
-    logging.info(
+    log.info(
         '[metric:call.duration] %s %s %d - %.2fs',
         request.method,
         request.url,
